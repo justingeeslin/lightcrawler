@@ -14,10 +14,14 @@ const stats = {
   auditTimesByPageUrl: {}
 }
 
+var configPathLighthouse;
+
 module.exports = (options) => {
   stats.startTime = new Date()
   const configPath = path.resolve(options.config)
   const config = JSON.parse(fs.readFileSync(configPath))
+
+  configPathLighthouse = path.resolve(options.lighthouseConfig)
 
   const crawler = new Crawler(options.url)
   crawler.respectRobotsTxt = false
@@ -68,7 +72,7 @@ function runLighthouse (url, configPath, callback) {
     '--disable-cpu-throttling',
     '--disable-network-throttling',
     '--chrome-flags=--headless --disable-gpu',
-    `--config-path=${configPath}`
+    `--config-path=${configPathLighthouse}`
   ]
 
   const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js')
