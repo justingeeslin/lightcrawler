@@ -64,14 +64,16 @@ function runLighthouse (url, configPath, callback) {
     url,
     '--output=json',
     '--output-path=stdout',
+    // '--output=html',
     '--disable-device-emulation',
     '--disable-cpu-throttling',
     '--disable-network-throttling',
     '--chrome-flags=--headless --disable-gpu',
-    `--config-path=${configPath}`
+    `--config-path=./custom-audit/custom-config.js`
   ]
 
   const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js')
+  console.log("Lighthouse command: " + lighthousePath + ' ' + args.join(" "));
   const lighthouse = ChildProcess.spawn(lighthousePath, args)
 
   let output = ''
