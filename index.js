@@ -58,116 +58,22 @@ module.exports = (options) => {
   crawler.start()
 }
 
+var resultIndex = 0;
 function runLighthouse (url, configPath, callback) {
   stats.pageCount++
   const args = [
     url,
     '--output=json',
-    '--output-path=stdout',
+    '--output=html',
+    '--output-path=./results-' + resultIndex++ + '.json',
     '--disable-device-emulation',
     '--disable-cpu-throttling',
     '--disable-network-throttling',
     '--chrome-flags=--headless --disable-gpu',
-    `--config-path=${configPath}`
+    `--config-path=${configPathLighthouse}`
   ]
 
   const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js')
   const lighthouse = ChildProcess.spawn(lighthousePath, args)
 
-  let output = ''
-  lighthouse.stdout.on('data', (data) => {
-    output += data
-  })
-
-  stats.auditTimesByPageUrl[url] = {startTime: new Date()}
-  lighthouse.once('close', () => {
-    stats.auditTimesByPageUrl[url].endTime = new Date()
-    let errorCount = 0
-
-    let report
-    try {
-      report = JSON.parse(output)
-    } catch (parseError) {
-      console.error(`Parsing JSON report output failed: ${output}`)
-      callback(1)
-      return
-    }
-
-    report.reportCategories.forEach((category) => {
-      let displayedCategory = false
-      category.audits.forEach((audit) => {
-        if (audit.score === 100) {
-          stats.passedAuditsCount++
-        } else {
-          if (!displayedCategory) {
-            console.log();
-            console.log(category.name.bold.underline);
-            displayedCategory = true
-          }
-          errorCount++
-          console.log(url.replace(/\/$/, ''), '\u2717'.red, audit.id.bold, '-', audit.result.description.italic)
-
-          if (stats.violationCounts[category.name] === undefined) {
-            stats.violationCounts[category.name] = 0
-          }
-
-          if (audit.result.extendedInfo) {
-            const {value} = audit.result.extendedInfo
-            if (Array.isArray(value)) {
-              stats.violationCounts[category.name] += value.length
-              value.forEach((result) => {
-                if (result.url) {
-                  console.log(`   ${result.url}`)
-                }
-              })
-            } else if (Array.isArray(value.nodes)) {
-              stats.violationCounts[category.name] += value.nodes.length
-              const messagesToNodes = {}
-              value.nodes.forEach((result) => {
-                let message = result.failureSummary
-                message = message.replace(/^Fix any of the following:/g, '').trim()
-                if (messagesToNodes[message]) {
-                  messagesToNodes[message].push(result.html)
-                } else {
-                  messagesToNodes[message] = [result.html]
-                }
-              })
-              Object.keys(messagesToNodes).forEach((message) => {
-                console.log(`   ${message}`)
-                messagesToNodes[message].forEach(node => {
-                  console.log(`     ${node}`.gray)
-                })
-              })
-            } else {
-              stats.violationCounts[category.name]++
-            }
-          }
-        }
-      })
-    })
-
-    callback(errorCount)
-  })
-}
-
-function printStats() {
-  console.log();
-  console.log();
-  console.log('Lighthouse Summary'.bold.underline);
-  console.log(`  Total Pages Scanned: ${stats.pageCount}`);
-  console.log(`  Total Auditing Time: ${new Date() - stats.startTime} ms`);
-  const totalTime = Object.keys(stats.auditTimesByPageUrl).reduce((sum, url) => {
-    const {endTime, startTime} = stats.auditTimesByPageUrl[url]
-    return (endTime - startTime) + sum
-  }, 0)
-  console.log(`  Average Page Audit Time: ${Math.round(totalTime/stats.pageCount)} ms`);
-  console.log(`  Total Audits Passed: ${stats.passedAuditsCount}`, '\u2713'.green);
-  if (Object.keys(stats.violationCounts).length === 0) {
-    console.log(`  Total Violations: None! \\o/ 🎉`);
-  } else {
-    console.log(`  Total Violations:`);
-    Object.keys(stats.violationCounts).forEach(category => {
-      console.log(`    ${category}: ${stats.violationCounts[category]}`, '\u2717'.red);
-    })
-  }
 }
