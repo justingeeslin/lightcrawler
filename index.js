@@ -14,10 +14,14 @@ const stats = {
   auditTimesByPageUrl: {}
 }
 
+var configPathLighthouse;
+
 module.exports = (options) => {
   stats.startTime = new Date()
   const configPath = path.resolve(options.config)
   const config = JSON.parse(fs.readFileSync(configPath))
+
+  configPathLighthouse = path.resolve(options.lighthouseConfig)
 
   const crawler = new Crawler(options.url)
   crawler.respectRobotsTxt = false
@@ -64,16 +68,14 @@ function runLighthouse (url, configPath, callback) {
     url,
     '--output=json',
     '--output-path=stdout',
-    // '--output=html',
     '--disable-device-emulation',
     '--disable-cpu-throttling',
     '--disable-network-throttling',
     '--chrome-flags=--headless --disable-gpu',
-    `--config-path=./custom-audit/custom-config.js`
+    `--config-path=${configPathLighthouse}`
   ]
 
   const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js')
-  console.log("Lighthouse command: " + lighthousePath + ' ' + args.join(" "));
   const lighthouse = ChildProcess.spawn(lighthousePath, args)
 
   let output = ''
