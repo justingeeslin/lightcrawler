@@ -5,6 +5,7 @@ const path = require('path')
 const queue = require('async/queue')
 const fs = require('fs')
 const colors = require('colors')
+const extend = require('extend')
 
 const stats = {
   pageCount: 0,
@@ -19,11 +20,21 @@ module.exports = (options) => {
   const configPath = path.resolve(options.config)
   const config = JSON.parse(fs.readFileSync(configPath))
 
-  const crawler = new Crawler(options.url)
-  crawler.respectRobotsTxt = false
-  crawler.parseHTMLComments = false
-  crawler.parseScriptTags = false
-  crawler.maxDepth = config.settings.crawler.maxDepth || 1
+  const crawler = new Crawler(config.settings.crawler.host)
+
+  var crawlerDefaults = {
+    respectRobotsTxt: false,
+    parseHTMLComments: false,
+    parseScriptTags: false,
+    maxDepth: 1
+  }
+
+  //Apply first defaults, second overriding defaults
+  extend(crawler, crawlerDefaults, config.settings.crawler)
+  //Apply CLI parameters thirdly, useful for supplying the URL from the CLI
+  if (typeof options.url !== "undefined") {
+    crawler.host = options.url
+  }
 
   crawler.discoverResources = (buffer, item) => {
     const page = cheerio.load(buffer.toString('utf8'))
