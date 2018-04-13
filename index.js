@@ -62,7 +62,6 @@ module.exports = (options) => {
   })
   crawler.once('complete', () => {
     lighthouseQueue.drain = () => {
-      printStats()
       if (totalErrorCount > 0) {
         process.exit(1)
       }
@@ -74,7 +73,7 @@ module.exports = (options) => {
 
 var resultIndex = 0;
 function runLighthouse (url, configPath, callback) {
-  stats.pageCount++
+
   const args = [
     url,
     '--output=json',
