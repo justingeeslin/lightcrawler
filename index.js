@@ -89,4 +89,16 @@ function runLighthouse (url, configPath, callback) {
   const lighthousePath = require.resolve('lighthouse/lighthouse-cli/index.js')
   const lighthouse = ChildProcess.spawn(lighthousePath, args)
 
+  lighthouse.stdout.on('data', (data) => {
+    console.log(`${data}`);
+  });
+
+  lighthouse.stderr.on('data', (data) => {
+    console.error(`${data}`);
+  });
+
+  lighthouse.on('close', (code) => {
+    console.log(`child process exited with code ${code}`);
+  });
+
 }
