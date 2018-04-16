@@ -23,7 +23,7 @@ module.exports = (options) => {
   const config = JSON.parse(fs.readFileSync(configPath))
   configPathLighthouse = path.resolve(options.lighthouseConfig)
 
-  const crawler = new Crawler(config.settings.crawler.host)
+  const crawler = new Crawler(options.url)
 
   var crawlerDefaults = {
     respectRobotsTxt: false,
@@ -34,10 +34,6 @@ module.exports = (options) => {
 
   //Apply first defaults, second overriding defaults
   extend(crawler, crawlerDefaults, config.settings.crawler)
-  //Apply CLI parameters thirdly, useful for supplying the URL from the CLI
-  if (typeof options.url !== "undefined") {
-    crawler.host = options.url
-  }
 
   crawler.discoverResources = (buffer, item) => {
     const page = cheerio.load(buffer.toString('utf8'))
