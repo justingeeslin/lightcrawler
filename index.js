@@ -20,7 +20,7 @@ var configPathLighthouse;
 module.exports = (options) => {
   stats.startTime = new Date()
   const configPath = path.resolve(options.config)
-  const config = JSON.parse(fs.readFileSync(configPath))
+  const config = require(configPath)
   configPathLighthouse = path.resolve(options.lighthouseConfig)
 
   const crawler = new Crawler(options.url)
